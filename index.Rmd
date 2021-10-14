@@ -107,7 +107,7 @@ read_excel("aamc_grants.xlsx") %>%
   arrange(desc(direct_unrecorded))-> b
 
 datatable(b, rownames = FALSE) %>% 
-      formatCurrency(2:5, currency = "", interval = 3, mark = ",")
+      formatCurrency(2:6, currency = "", interval = 3, mark = ",")
 ```
 
 ### Direct and Recorded by Percent
@@ -249,7 +249,7 @@ read_excel("aamc_hospital_programs.xlsx") %>%
   filter(school %in% c("Private, All Regions Average", "Harvard")) -> f 
 
 datatable(f, rownames = FALSE) %>% 
-  formatCurrency(2:5, currency = "", interval = 3, mark = ",")
+  formatCurrency(2:6, currency = "", interval = 3, mark = ",")
 ```
 
 ## Market Value of Endowment by Type
@@ -287,7 +287,7 @@ Harvard has the highest F&A rate, together with Cornell-Weill and NYU-Grossman.
 ```{r fa, warning = FALSE, message=FALSE}
 read_excel("aamc_fa.xlsx") %>% 
   rename(school = `...1`) %>% 
-  mutate(across(.cols = -school, as.numeric)) %>% 
+  mutate(across(.cols = -school, ~as.numeric(.)/100)) %>% 
   drop_na(school) %>% 
   rename(fa_rate = `Federal Negotiated F&A rate for on campus organized research`) %>% 
   arrange(desc(fa_rate)) -> h

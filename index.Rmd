@@ -19,7 +19,7 @@ Harvard has the highest revenue of all AAMC schools. It collects the most dollar
 federal grants, and non-federal grants of all AAMC schools. It collects the third
 most in gifts and endowment. 
 
-```{r revenue_source, warning = FALSE, message=FALSE}
+```{r revenue_source, warning = FALSE, message=FALSE, layout = "l-body-outset"}
 read_excel("aamc_revenue_source.xlsx") %>% 
   rename(school = `...1`) %>% 
   mutate(across(.cols = -school, ~str_replace_all(., "\\$|,", ""))) %>% 

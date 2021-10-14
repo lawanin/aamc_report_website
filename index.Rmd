@@ -1,0 +1,340 @@
+---
+title: "AAMC Revenue Report"
+description: |
+site: distill::distill_website
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+library(scales)
+library(readxl)
+library(DT)
+library(rmarkdown)
+```
+
+## Revenue by Source 
+
+Harvard has the highest revenue of all AAMC schools. It collects the most dollars in tuition, 
+federal grants, and non-federal grants of all AAMC schools. It collects the third
+most in gifts and endowment. 
+
+```{r revenue_source, warning = FALSE, message=FALSE}
+read_excel("aamc_revenue_source.xlsx") %>% 
+  rename(school = `...1`) %>% 
+  mutate(across(.cols = -school, ~str_replace_all(., "\\$|,", ""))) %>% 
+  mutate(across(.cols = -school, as.numeric)) %>% 
+  drop_na() %>% 
+  rename(tuition = `Total Tuition and Fees Revenues`,
+         federal_grants = `Total Federal Research Grants and Contracts`,
+         other_grants = `Other Grants and Contracts`,
+         support = `Total Government and Parent Support`,
+         hospital = `Total Expenditures and Transfers from Hospital Funds`,
+         gifts_endowment = `Total Revenues from Gifts and Endowment Funds`) %>% 
+  arrange(desc(tuition)) %>% 
+  rowwise() %>% 
+  mutate(total = sum(across(.cols = -school))) ->a
+
+a %>%
+  group_by(1) %>% 
+  summarize(across(-school, ~mean(.))) %>% 
+  mutate(total_grants = federal_grants + other_grants) %>% 
+  select(-`1`) %>% 
+  mutate(school = "Average") %>% 
+  select(school, tuition, federal_grants, other_grants, total_grants, support, hospital, gifts_endowment, total) %>% 
+  mutate(across(-school, ~formatC(., format = "d", big.mark = ",")))-> a_average
+
+datatable(a, rownames = FALSE)  %>% 
+    formatCurrency(2:8, currency = "", interval = 3, mark = ",")
+
+paged_table(a_average)
+```
+
+### Percent Revenue by Source
+
+The proportion each revenue source contributes to the school's total revenue varies
+widely among schools. Tution makes up 3% of Harvard's total revenue, while it makes
+up 51% of Tufts'. The average percentage received from tuition is 13%.
+
+Federal grantscontribute most to Harvard's total revenue, making up
+47%. Of all AAMC schools, Harvard receives the second highest percentage, 89%, of its total
+revenue from all grants, behind Mayo Clinic. The average percentage received from all grants is
+roughly 30%. 
+
+Harvard receives approximately 6% of its revenue from gifts and endowment, while 
+Stanford receives approximately 19% from these, the second highest percentage after Oregon. 
+The average percentage received from gifts and endowments is roughly 5%.
+\
+&nbsp;
+\
+&nbsp;
+
+
+```{r}
+a %>% 
+  mutate(across(.cols = -school, ~./total)) %>% 
+  mutate(total_grants = federal_grants + other_grants) %>% 
+  select(school, tuition, federal_grants, other_grants, total_grants, support, hospital, gifts_endowment, total) -> a_percent
+
+datatable(a_percent, rownames = FALSE) %>% 
+  formatPercentage(2:8, digits = 2)
+
+a_percent_avg <- a_percent %>% 
+  group_by(total) %>% 
+  summarize(across(-school, ~mean(.))) %>% 
+  mutate(school = "Average") %>% 
+  select(school, tuition, federal_grants, other_grants, total_grants, support, hospital, gifts_endowment, total) %>% 
+  mutate(across(-school, ~str_c(as.character(round(.*100, digits =2)), "%")))
+
+paged_table(a_percent_avg)
+```
+
+## Federal Research Grants and Contracts 
+
+Harvard lags in recorded grants but leads in unrecorded grants. 
+
+```{r grants, warning = FALSE, message=FALSE}
+read_excel("aamc_grants.xlsx") %>% 
+  rename(school = `...1`) %>% 
+  mutate(across(.cols = -school, ~str_replace_all(., "\\$|,", ""))) %>% 
+  mutate(across(.cols = -school, as.numeric)) %>% 
+  drop_na() %>% 
+  rename(direct_recorded = `Direct Federal Research Grants and Contracts - Recorded`,
+         direct_unrecorded = `Direct Federal Research Grants and Contracts - Not Recorded`,
+         indirect_recorded = `Indirect Federal Research Grants and Contracts - Recorded`,
+         indirect_unrecorded = `Indirect Federal Research Grants and Contracts - Not Recorded`, 
+         total = `Total Federal Research Grants and Contracts`) %>% 
+  arrange(desc(direct_unrecorded))-> b
+
+datatable(b, rownames = FALSE) %>% 
+      formatCurrency(2:5, currency = "", interval = 3, mark = ",")
+```
+
+### Direct and Recorded by Percent
+
+On average, schools have far more direct grants than indirect grants and far 
+more recorded grants than unrecorded grants. Harvard follows the first trend. 
+However, as noted above, Harvard has far more unrecorded grants than recorded 
+grants. 
+
+Note that percent recorded and percent unrecorded should add to 100, and likewise
+for direct and indirect. 
+
+```{r}
+b_percent <- b %>% 
+  mutate(recorded_percent = (direct_recorded + indirect_recorded) / total,
+         unrecoreded_percent = (direct_unrecorded + indirect_unrecorded) /total, 
+         direct_percent = (direct_recorded + direct_unrecorded) / total, 
+         indirect_percent = (indirect_recorded + indirect_unrecorded) / total) %>% 
+  select(school, contains("percent"))
+
+ b_percent_avg <- b_percent %>% 
+  group_by(1) %>% 
+  summarize(across(-school, ~mean(., na.rm = TRUE))) %>% 
+  select(-`1`) %>% 
+   mutate(school = "Average") %>% 
+   select(school, recorded_percent:indirect_percent) %>% 
+   mutate(across(-school, ~str_c(as.character(round(.*100, digits =2)), "%")))
+  
+ 
+ datatable(b_percent, rownames = FALSE) %>% 
+   formatPercentage(2:5, digits = 2)
+  
+ paged_table(b_percent_avg)
+```
+
+## Gifts and Endowments 
+
+Harvard lags in gifts, 28th out of all medical schools, but is first in endowments. 
+
+```{r gifts, warning = FALSE, message=FALSE}
+read_excel("aamc_gifts.xlsx") %>% 
+  rename(school = `...1`) %>% 
+  mutate(across(.cols = -school, ~str_replace_all(., "\\$|,", ""))) %>% 
+  mutate(across(.cols = -school, as.numeric)) %>% 
+  drop_na() %>% 
+  rename(gifts = `Total Revenues from Gifts`,
+         endowment =`Total Revenues from Endowment Funds`, 
+         total = `Total Revenues from Gifts and Endowment Funds`) %>% 
+  arrange(desc(gifts)) -> c
+
+datatable(c, rownames = FALSE) %>% 
+  formatCurrency(2:4, currency = "", interval = 3, mark = ",")
+```
+
+### Percent Gifts and Endowments
+
+Of the sum of gift and endowments, gifts make up approximately 14% while endowments
+make up 86%, the tenth highest percentage of all AAMC schools. This is quite different from 
+the mean. Johns Hopkins is one example of a school skewed in the other direction, 
+with gifts making up 74% of its sum. 
+
+```{r}
+c_percent <- c %>% 
+  mutate(percent_gifts = gifts / total, 
+         percent_endowment = endowment / total) %>% 
+  select(school, contains("percent")) 
+  
+c_percent_avg <- c_percent %>% 
+  group_by(1) %>% 
+  summarize(across(-school, ~mean(., na.rm = TRUE))) %>% 
+  select(-`1`) %>% 
+  mutate(school = "Average") %>% 
+  select(school, percent_gifts, percent_endowment) %>% 
+  mutate(across(-school, ~str_c(as.character(round(.*100, digits =2)), "%")))
+
+ datatable(c_percent, rownames = FALSE) %>% 
+   formatPercentage(2:3, digits = 2)
+  
+ paged_table(c_percent_avg)
+```
+
+## Government and Parent Support
+
+Harvard exceeds the private school average in state and parent support. No money 
+from any other form of support. 
+
+```{r support, warning = FALSE, message=FALSE}
+read_excel("aamc_support.xlsx") %>% 
+  rename(school = `...1`) %>% 
+  mutate(across(.cols = -school, ~str_replace_all(., "\\$|,", ""))) %>% 
+  mutate(across(.cols = -school, as.numeric)) %>% 
+  drop_na() %>% 
+  rename(federal = `Total Federal Appropriations`,
+         state_parent = `Total Adjusted State and Parent Support`,
+         local = `Total Local Appropriations`,
+         total = `Total Government and Parent Support`) %>% 
+  filter(school %in% c("Private, All Regions Average", "Harvard")) -> d
+
+datatable(d, rownames = FALSE) %>% 
+  formatCurrency(2:5, currency = "", interval = 3, mark = ",")
+```
+
+## Hospital and Medical School Programs - by Hospital Type
+
+Harvard receives only from the "Total Expenditures and transfers from Other Affiliated Hospital Funds" category and lags behind the private school average in all.
+
+```{r hospital_type, warning = FALSE, message=FALSE}
+read_excel("aamc_hospital_type.xlsx") %>% 
+  rename(school = `...1`) %>% 
+  mutate(across(.cols = -school, ~str_replace_all(., "\\$|,", ""))) %>% 
+  mutate(across(.cols = -school, as.numeric)) %>% 
+  drop_na() %>% 
+  rename(university_hospital = `Total Expenditures and transfers from University Hospital Funds`,
+         va_hospital = `Total Expenditures and transfers from VA Hospital Funds`,
+         other_hospital = `Total Expenditures and transfers from Other Affiliated Hospital Funds`,
+         total = `Total Expenditures and Transfers from Hospital Funds`) %>% 
+  filter(school %in% c("Private, All Regions Average", "Harvard")) -> e
+
+datatable(e, rownames = FALSE) %>% 
+  formatCurrency(2:5, currency = "", interval = 3, mark = ",")
+```
+
+## Hospital and Medical School Programs - by Recipient of Funds
+
+Harvard only funds strategic support for Medical School Programs. The sum 
+is lower than the private school average.
+
+```{r hospital_programs, warning = FALSE, message=FALSE}
+read_excel("aamc_hospital_programs.xlsx") %>% 
+  rename(school = `...1`) %>% 
+  mutate(across(.cols = -school, ~str_replace_all(., "\\$|,", ""))) %>% 
+  mutate(across(.cols = -school, as.numeric)) %>% 
+  drop_na() %>% 
+  rename(services = `Total Purchased Services`,
+         stipends = `Total Housestaff Stipends`,
+         clinical_investments = `Total Hospital Investments in the Clinical Enterprise`,
+         strategic_support = `Total Strategic Support for Medical School Programs`,
+         total = `Total Expenditures and Transfers from Hospital Funds`) %>% 
+  filter(school %in% c("Private, All Regions Average", "Harvard")) -> f 
+
+datatable(f, rownames = FALSE) %>% 
+  formatCurrency(2:5, currency = "", interval = 3, mark = ",")
+```
+
+## Market Value of Endowment by Type
+
+Harvard, along with many other schools, lacks breakdown for endowment. It has the highest total, 
+in accordance with what we have seen above.
+
+```{r aamc_endowment, warning = FALSE, message=FALSE}
+# I don't understand the total column, although it appears to be that way in 
+# the original. 
+
+g <- read_excel("aamc_endowment_value.xlsx") %>% 
+  rename(school = `...1`) %>% 
+  mutate(across(.cols = -school, ~str_replace_all(., "\\$|,", ""))) %>% 
+  mutate(across(.cols = -school, as.numeric)) %>% 
+  drop_na(school) %>% 
+  rename(quasi_endowment = `Market Value of Quasi-endowments`,
+         term_endowment = `Market Value of Term Endowments`,
+         pure_endowment = `Market Value of True/pure Endowments`,
+         other_endowment = `Market Value of Other Endowments`, 
+         total = `Total Endowment (only if breakdowns are unavailable)`) %>% 
+  rowwise() %>% 
+  mutate(total = case_when(is.na(total) == TRUE ~  sum(quasi_endowment, term_endowment, pure_endowment, other_endowment, na.rm = TRUE),
+    total == 0 ~ sum(quasi_endowment, term_endowment, pure_endowment, other_endowment, na.rm = TRUE),
+    total > 0 ~ total)) 
+
+datatable(g, rownames = FALSE) %>% 
+  formatCurrency(2:6, currency = "", interval = 3, mark = ",")
+```
+
+## Federal Negotiated Facilities & Administration Rate
+
+Harvard has the highest F&A rate, together with Cornell-Weill and NYU-Grossman.
+
+```{r fa, warning = FALSE, message=FALSE}
+read_excel("aamc_fa.xlsx") %>% 
+  rename(school = `...1`) %>% 
+  mutate(across(.cols = -school, as.numeric)) %>% 
+  drop_na(school) %>% 
+  rename(fa_rate = `Federal Negotiated F&A rate for on campus organized research`) %>% 
+  arrange(desc(fa_rate)) -> h
+
+datatable(h, rownames = FALSE) %>% 
+  formatPercentage(2, digits = 1)
+```
+
+## Distribution of the Facilities & Administration Costs
+
+Harvard has the third highest proportion of costs in the "other" category. It is exceeded only
+by Oakland Beaumont and Zucker Hofstra Northwell. 
+
+```{r fa_distribution, warning = FALSE, message=FALSE}
+read_excel("aamc_fa_distribution.xlsx") %>% 
+  rename(school = `...1`) %>% 
+  mutate(across(.cols = -school, ~str_replace_all(., "%", ""))) %>% 
+  mutate(across(.cols = -school, as.numeric)) %>% 
+  mutate(across(.cols = -school, ~ . / 100)) %>% 
+  drop_na(school) %>% 
+  rename(medical_school = `Percent retained by medical school`,
+        health_admin= `Percent retained by health sciences administration`,
+        university_admin = `Percent retained by central university administration`, 
+        state = `Percent retained by state`,
+        other = `Percent retained by other`) %>% 
+  arrange(desc(other)) -> i
+
+datatable(i, rownames = FALSE) %>% 
+  formatPercentage(2:6, digits = 1)
+```
+
+## Number of Faculty
+
+Harvard has the most clinical faculty. Harvard has the 7th largest preclincial 
+faculty.
+
+```{r faculty, warning = FALSE, message= FALSE}
+read_delim("aamc_faculty.csv", delim = ";") %>% 
+  rename(school = X1) %>% 
+  select(-c(X5:X8)) %>% 
+  mutate(across(.cols = -school, ~str_replace_all(., ",", ""))) %>% 
+  mutate(across(.cols = -school, as.numeric)) %>% 
+  drop_na(school) %>% 
+  rename(pre_clinical = `Total Full-Time Basic Sciences Faculty`,
+         clinical = `Total Full-Time Clinical Faculty`,
+         total = `Total Full-Time Faculty`)  -> j 
+datatable(j, rownames = FALSE)
+  
+  
+```

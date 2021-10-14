@@ -54,11 +54,11 @@ paged_table(a_average)
 
 The proportion each revenue source contributes to the school's total revenue varies
 widely among schools. Tution makes up 3% of Harvard's total revenue, while it makes
-up 51% of Tufts'. The average percentage received from tuition is 13%.
+up 51% of Tufts'. Of all AAMC schools, the average percentage received from tuition is 13%.
 
-Federal grantscontribute most to Harvard's total revenue, making up
-47%. Of all AAMC schools, Harvard receives the second highest percentage, 89%, of its total
-revenue from all grants, behind Mayo Clinic. The average percentage received from all grants is
+Federal grants contribute most to Harvard's total revenue, making up
+47%. Of all AAMC schools, Harvard receives the second highest percentage of its total
+revenue, 89%, from both kinds of grants combined, behind Mayo Clinic. The average percentage received from all grants is
 roughly 30%. 
 
 Harvard receives approximately 6% of its revenue from gifts and endowment, while 
@@ -118,7 +118,7 @@ more recorded grants than unrecorded grants. Harvard follows the first trend.
 However, as noted above, Harvard has far more unrecorded grants than recorded 
 grants. 
 
-Note that percent recorded and percent unrecorded should add to 100, and likewise
+Note that percent recorded and percent unrecorded should add to 100; likewise
 for direct and indirect. 
 
 ```{r, layout = "l-body-outset"}
@@ -192,8 +192,8 @@ c_percent_avg <- c_percent %>%
 
 ## Government and Parent Support
 
-Harvard exceeds the private school average in state and parent support. No money 
-from any other form of support. 
+Harvard exceeds the private school average in state and parent support. Harvard 
+recieves no money from any other form of support. 
 
 ```{r support, warning = FALSE, message=FALSE}
 read_excel("aamc_support.xlsx") %>% 
@@ -213,7 +213,7 @@ datatable(d, rownames = FALSE) %>%
 
 ## Hospital and Medical School Programs - by Hospital Type
 
-Harvard receives only from the "Total Expenditures and transfers from Other Affiliated Hospital Funds" category and lags behind the private school average in all.
+Harvard receives only from the "Total Expenditures and Transfers from Other Affiliated Hospital Funds" category and lags behind the private school average in all.
 
 ```{r hospital_type, warning = FALSE, message=FALSE}
 read_excel("aamc_hospital_type.xlsx") %>% 
@@ -322,7 +322,7 @@ datatable(i, rownames = FALSE) %>%
 
 ## Number of Faculty
 
-Harvard has the most clinical faculty. Harvard has the 7th largest preclincial 
+Harvard has the most clinical faculty and most total faculty. Harvard has the 7th most preclincial 
 faculty.
 
 ```{r faculty, warning = FALSE, message= FALSE}

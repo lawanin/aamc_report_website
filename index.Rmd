@@ -70,11 +70,11 @@ The average percentage received from gifts and endowments is roughly 5%.
 &nbsp;
 
 
-```{r}
+```{r, layout = "l-body-outset"}
 a %>% 
   mutate(across(.cols = -school, ~./total)) %>% 
   mutate(total_grants = federal_grants + other_grants) %>% 
-  select(school, tuition, federal_grants, other_grants, total_grants, support, hospital, gifts_endowment, total) -> a_percent
+  select(school, tuition, federal_grants, other_grants, total_grants, support, hospital, gifts_endowment) -> a_percent
 
 datatable(a_percent, rownames = FALSE) %>% 
   formatPercentage(2:8, digits = 2)
@@ -83,7 +83,7 @@ a_percent_avg <- a_percent %>%
   group_by(total) %>% 
   summarize(across(-school, ~mean(.))) %>% 
   mutate(school = "Average") %>% 
-  select(school, tuition, federal_grants, other_grants, total_grants, support, hospital, gifts_endowment, total) %>% 
+  select(school, tuition, federal_grants, other_grants, total_grants, support, hospital, gifts_endowment) %>% 
   mutate(across(-school, ~str_c(as.character(round(.*100, digits =2)), "%")))
 
 paged_table(a_percent_avg)

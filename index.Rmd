@@ -80,8 +80,9 @@ datatable(a_percent, rownames = FALSE) %>%
   formatPercentage(2:8, digits = 2)
 
 a_percent_avg <- a_percent %>% 
-  group_by(total) %>% 
+  group_by(1) %>% 
   summarize(across(-school, ~mean(.))) %>% 
+  select(-`1`) %>% 
   mutate(school = "Average") %>% 
   select(school, tuition, federal_grants, other_grants, total_grants, support, hospital, gifts_endowment) %>% 
   mutate(across(-school, ~str_c(as.character(round(.*100, digits =2)), "%")))
@@ -93,7 +94,7 @@ paged_table(a_percent_avg)
 
 Harvard lags in recorded grants but leads in unrecorded grants. 
 
-```{r grants, warning = FALSE, message=FALSE}
+```{r grants, warning = FALSE, message=FALSE, layout = "l-body-outset"}
 read_excel("aamc_grants.xlsx") %>% 
   rename(school = `...1`) %>% 
   mutate(across(.cols = -school, ~str_replace_all(., "\\$|,", ""))) %>% 
@@ -120,7 +121,7 @@ grants.
 Note that percent recorded and percent unrecorded should add to 100, and likewise
 for direct and indirect. 
 
-```{r}
+```{r, layout = "l-body-outset"}
 b_percent <- b %>% 
   mutate(recorded_percent = (direct_recorded + indirect_recorded) / total,
          unrecoreded_percent = (direct_unrecorded + indirect_unrecorded) /total, 
@@ -235,7 +236,7 @@ datatable(e, rownames = FALSE) %>%
 Harvard only funds strategic support for Medical School Programs. The sum 
 is lower than the private school average.
 
-```{r hospital_programs, warning = FALSE, message=FALSE}
+```{r hospital_programs, warning = FALSE, message=FALSE, layout = "l-body-outset"}
 read_excel("aamc_hospital_programs.xlsx") %>% 
   rename(school = `...1`) %>% 
   mutate(across(.cols = -school, ~str_replace_all(., "\\$|,", ""))) %>% 
@@ -257,7 +258,7 @@ datatable(f, rownames = FALSE) %>%
 Harvard, along with many other schools, lacks breakdown for endowment. It has the highest total, 
 in accordance with what we have seen above.
 
-```{r aamc_endowment, warning = FALSE, message=FALSE}
+```{r aamc_endowment, warning = FALSE, message=FALSE, layout = "l-body-outset"}
 # I don't understand the total column, although it appears to be that way in 
 # the original. 
 
